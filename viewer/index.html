@@ -1,191 +1,194 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>VR Bridge Test</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    :root {
-      color-scheme: dark;
-    }
 
-    body {
-      font-family: Arial, sans-serif;
-      margin: 24px;
-      background: #111;
-      color: #eee;
-    }
+    <head>
+        <meta charset="utf-8">
+        <title>VR Bridge Test</title>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>
+            :root {
+                color-scheme: dark;
+            }
 
-    h1 {
-      margin-top: 0;
-    }
+            body {
+                font-family: Arial, sans-serif;
+                margin: 24px;
+                background: #111;
+                color: #eee;
+            }
 
-    .row {
-      margin-bottom: 12px;
-    }
+            h1 {
+                margin-top: 0;
+            }
 
-    label {
-      display: inline-block;
-      width: 90px;
-    }
+            .row {
+                margin-bottom: 12px;
+            }
 
-    input {
-      width: 220px;
-      padding: 6px;
-      margin-right: 8px;
-    }
+            label {
+                display: inline-block;
+                width: 90px;
+            }
 
-    button {
-      padding: 8px 12px;
-      margin-right: 8px;
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
+            input {
+                width: 220px;
+                padding: 6px;
+                margin-right: 8px;
+            }
 
-    #log {
-      margin-top: 16px;
-      padding: 12px;
-      background: #1b1b1b;
-      border: 1px solid #333;
-      min-height: 220px;
-      white-space: pre-wrap;
-    }
+            button {
+                padding: 8px 12px;
+                margin-right: 8px;
+                margin-bottom: 8px;
+                cursor: pointer;
+            }
 
-    .ok {
-      color: #7CFC98;
-    }
+            #log {
+                margin-top: 16px;
+                padding: 12px;
+                background: #1b1b1b;
+                border: 1px solid #333;
+                min-height: 220px;
+                white-space: pre-wrap;
+            }
 
-    .err {
-      color: #ff7b7b;
-    }
-  </style>
-</head>
-<body>
-  <h1>Bridge Test</h1>
+            .ok {
+                color: #7CFC98;
+            }
 
-  <div class="row">
-    <label for="host">Host</label>
-    <input id="host" value="192.168.137.1" />
-  </div>
+            .err {
+                color: #ff7b7b;
+            }
+        </style>
+    </head>
 
-  <div class="row">
-    <label for="port">Port</label>
-    <input id="port" value="5005" />
-  </div>
+    <body>
+        <h1>Bridge Test</h1>
 
-  <div class="row">
-    <button id="httpBtn">Test HTTP</button>
-    <button id="wsConnectBtn">Connect WS</button>
-    <button id="wsSendBtn">Send WS</button>
-    <button id="wsCloseBtn">Close WS</button>
-    <button id="clearBtn">Clear</button>
-  </div>
+        <div class="row">
+            <label for="host">Host</label>
+            <input id="host" value="192.168.137.1" />
+        </div>
 
-  <div id="log"></div>
+        <div class="row">
+            <label for="port">Port</label>
+            <input id="port" value="5005" />
+        </div>
 
-  <script>
-    let socket = null;
+        <div class="row">
+            <button id="httpBtn">Test HTTP</button>
+            <button id="wsConnectBtn">Connect WS</button>
+            <button id="wsSendBtn">Send WS</button>
+            <button id="wsCloseBtn">Close WS</button>
+            <button id="clearBtn">Clear</button>
+        </div>
 
-    const hostInput = document.getElementById("host");
-    const portInput = document.getElementById("port");
-    const logEl = document.getElementById("log");
+        <div id="log"></div>
 
-    document.getElementById("httpBtn").addEventListener("click", testHttp);
-    document.getElementById("wsConnectBtn").addEventListener("click", connectWs);
-    document.getElementById("wsSendBtn").addEventListener("click", sendWs);
-    document.getElementById("wsCloseBtn").addEventListener("click", closeWs);
-    document.getElementById("clearBtn").addEventListener("click", clearLog);
+        <script>
+            let socket = null;
 
-    function getHttpBaseUrl() {
-      const host = hostInput.value.trim();
-      const port = portInput.value.trim();
-      return `http://${host}:${port}`;
-    }
+            const hostInput = document.getElementById("host");
+            const portInput = document.getElementById("port");
+            const logEl = document.getElementById("log");
 
-    function getWsUrl() {
-      const host = hostInput.value.trim();
-      const port = portInput.value.trim();
-      return `ws://${host}:${port}/ws`;
-    }
+            document.getElementById("httpBtn").addEventListener("click", testHttp);
+            document.getElementById("wsConnectBtn").addEventListener("click", connectWs);
+            document.getElementById("wsSendBtn").addEventListener("click", sendWs);
+            document.getElementById("wsCloseBtn").addEventListener("click", closeWs);
+            document.getElementById("clearBtn").addEventListener("click", clearLog);
 
-    async function testHttp() {
-      const url = `${getHttpBaseUrl()}/api/ping`;
-      log(`HTTP request: ${url}`);
+            function getHttpBaseUrl() {
+                const host = hostInput.value.trim();
+                const port = portInput.value.trim();
+                return `http://${host}:${port}`;
+            }
 
-      try {
-        const response = await fetch(url, {
-          method: "GET"
-        });
+            function getWsUrl() {
+                const host = hostInput.value.trim();
+                const port = portInput.value.trim();
+                return `ws://${host}:${port}/ws`;
+            }
 
-        const text = await response.text();
-        log(`HTTP status: ${response.status}`, "ok");
-        log(`HTTP body: ${text}`, "ok");
-      } catch (error) {
-        log(`HTTP error: ${error.message}`, "err");
-      }
-    }
+            async function testHttp() {
+                const url = `${getHttpBaseUrl()}/api/ping`;
+                log(`HTTP request: ${url}`);
 
-    function connectWs() {
-      const url = getWsUrl();
-      log(`WS connect: ${url}`);
+                try {
+                    const response = await fetch(url, {
+                        method: "GET"
+                    });
 
-      try {
-        socket = new WebSocket(url);
+                    const text = await response.text();
+                    log(`HTTP status: ${response.status}`, "ok");
+                    log(`HTTP body: ${text}`, "ok");
+                } catch (error) {
+                    log(`HTTP error: ${error.message}`, "err");
+                }
+            }
 
-        socket.addEventListener("open", () => {
-          log("WS open", "ok");
-        });
+            function connectWs() {
+                const url = getWsUrl();
+                log(`WS connect: ${url}`);
 
-        socket.addEventListener("message", event => {
-          log(`WS message: ${event.data}`, "ok");
-        });
+                try {
+                    socket = new WebSocket(url);
 
-        socket.addEventListener("close", event => {
-          log(`WS close: code=${event.code} reason=${event.reason || "none"}`);
-        });
+                    socket.addEventListener("open", () => {
+                        log("WS open", "ok");
+                    });
 
-        socket.addEventListener("error", () => {
-          log("WS error", "err");
-        });
-      } catch (error) {
-        log(`WS exception: ${error.message}`, "err");
-      }
-    }
+                    socket.addEventListener("message", event => {
+                        log(`WS message: ${event.data}`, "ok");
+                    });
 
-    function sendWs() {
-      if (!socket || socket.readyState !== WebSocket.OPEN) {
-        log("WS not connected", "err");
-        return;
-      }
+                    socket.addEventListener("close", event => {
+                        log(`WS close: code=${event.code} reason=${event.reason || "none"}`);
+                    });
 
-      const payload = `hello ${new Date().toISOString()}`;
-      socket.send(payload);
-      log(`WS sent: ${payload}`);
-    }
+                    socket.addEventListener("error", () => {
+                        log("WS error", "err");
+                    });
+                } catch (error) {
+                    log(`WS exception: ${error.message}`, "err");
+                }
+            }
 
-    function closeWs() {
-      if (!socket) {
-        log("WS not initialized");
-        return;
-      }
+            function sendWs() {
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    log("WS not connected", "err");
+                    return;
+                }
 
-      socket.close(1000, "Client closing");
-    }
+                const payload = `hello ${new Date().toISOString()}`;
+                socket.send(payload);
+                log(`WS sent: ${payload}`);
+            }
 
-    function clearLog() {
-      logEl.textContent = "";
-    }
+            function closeWs() {
+                if (!socket) {
+                    log("WS not initialized");
+                    return;
+                }
 
-    function log(message, cssClass = "") {
-      const line = document.createElement("div");
-      line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                socket.close(1000, "Client closing");
+            }
 
-      if (cssClass) {
-        line.className = cssClass;
-      }
+            function clearLog() {
+                logEl.textContent = "";
+            }
 
-      logEl.appendChild(line);
-    }
-  </script>
-</body>
+            function log(message, cssClass = "") {
+                const line = document.createElement("div");
+                line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+
+                if (cssClass) {
+                    line.className = cssClass;
+                }
+
+                logEl.appendChild(line);
+            }
+        </script>
+    </body>
+
 </html>

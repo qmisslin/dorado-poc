@@ -1,31 +1,61 @@
+using System.Net;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using DotNetEnv;
+
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+var allowedOrigin = GetRequiredEnv("HUB_ALLOWED_ORIGIN");
+var host = Environment.GetEnvironmentVariable("HUB_HOST") ?? "0.0.0.0";
+var port = int.TryParse(Environment.GetEnvironmentVariable("HUB_PORT"), out var parsedPort)
+  ? parsedPort
+  : 5005;
 
-app.Use(async (context, next) =>
+var certPath = GetRequiredEnv("HUB_CERT_PATH");
+var certPassword = GetRequiredEnv("HUB_CERT_PASSWORD");
+
+if (!Path.IsPathRooted(certPath))
 {
-  context.Response.Headers["Access-Control-Allow-Origin"] = "*";
-  context.Response.Headers["Access-Control-Allow-Headers"] = "*";
-  context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";
-  context.Response.Headers["Access-Control-Allow-Private-Network"] = "true";
+  certPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), certPath));
+}
 
-  if (context.Request.Method == "OPTIONS")
+if (!File.Exists(certPath))
+{
+  throw new FileNotFoundException($"TLS certificate not found: {certPath}");
+}
+
+var certificate = new X509Certificate2(certPath, certPassword);
+
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy("ViewerCors", policy =>
   {
-    context.Response.StatusCode = StatusCodes.Status204NoContent;
-    return;
-  }
-
-  await next();
+    policy
+      .WithOrigins(allowedOrigin)
+      .AllowAnyHeader()
+      .AllowAnyMethod();
+  });
 });
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+  options.Listen(IPAddress.Any, port, listen =>
+  {
+    listen.UseHttps(certificate);
+  });
+});
+
+var app = builder.Build();
+
+app.UseCors("ViewerCors");
 app.UseWebSockets();
 
 app.MapGet("/", () =>
 {
-  return Results.Text("Bridge server is running.");
+  return Results.Text("Dorado hub is running over HTTPS.");
 });
 
 app.MapGet("/api/ping", () =>
@@ -33,7 +63,7 @@ app.MapGet("/api/ping", () =>
   return Results.Json(new
   {
     ok = true,
-    message = "HTTP ping success",
+    message = "HTTPS ping success",
     serverTimeUtc = DateTime.UtcNow
   });
 });
@@ -56,12 +86,16 @@ app.Map("/ws", async context =>
 
     if (result.MessageType == WebSocketMessageType.Close)
     {
-      await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+      await webSocket.CloseAsync(
+        WebSocketCloseStatus.NormalClosure,
+        "Closing",
+        CancellationToken.None
+      );
       break;
     }
 
     var receivedText = Encoding.UTF8.GetString(buffer, 0, result.Count);
-    var responseText = $"WebSocket pong from server: {receivedText}";
+    var responseText = $"WSS pong from server: {receivedText}";
     var responseBytes = Encoding.UTF8.GetBytes(responseText);
 
     await webSocket.SendAsync(
@@ -73,24 +107,21 @@ app.Map("/ws", async context =>
   }
 });
 
-var port = GetPort(args, 5005);
-app.Urls.Add($"http://0.0.0.0:{port}");
-
-Console.WriteLine($"Bridge server listening on http://0.0.0.0:{port}");
-Console.WriteLine("HTTP endpoint: /api/ping");
-Console.WriteLine("WebSocket endpoint: /ws");
+Console.WriteLine($"HTTPS endpoint: https://{host}:{port}/api/ping");
+Console.WriteLine($"WSS endpoint: wss://{host}:{port}/ws");
+Console.WriteLine($"Allowed origin: {allowedOrigin}");
+Console.WriteLine($"Certificate path: {certPath}");
 
 app.Run();
 
-static int GetPort(string[] args, int defaultPort)
+static string GetRequiredEnv(string key)
 {
-  foreach (var arg in args)
+  var value = Environment.GetEnvironmentVariable(key);
+
+  if (string.IsNullOrWhiteSpace(value))
   {
-    if (arg.StartsWith("--port=") && int.TryParse(arg["--port=".Length..], out var port))
-    {
-      return port;
-    }
+    throw new InvalidOperationException($"Environment variable '{key}' is required.");
   }
 
-  return defaultPort;
+  return value;
 }
