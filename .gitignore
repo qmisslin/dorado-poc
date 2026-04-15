@@ -45,6 +45,7 @@ settings.local.json
 *.key
 *.crt
 *.cer
+*.cnf
 
 # Archive / temp
 *.zip
