@@ -1,0 +1,71 @@
+# .NET build outputs
+**/bin/
+**/obj/
+**/publish/
+
+# Logs
+*.log
+
+# User-specific / IDE
+*.user
+*.rsuser
+*.suo
+*.userprefs
+.vs/
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# App configuration overrides / local secrets
+appsettings.Local.json
+appsettings.local.json
+appsettings.Development.Local.json
+appsettings.development.local.json
+appsettings.*.Local.json
+appsettings.*.local.json
+secrets.json
+config.local.json
+config.development.local.json
+settings.local.json
+
+# Certificates / keys
+*.pfx
+*.p12
+*.snk
+*.pem
+*.key
+*.crt
+*.cer
+
+# Archive / temp
+*.zip
+*.tar
+*.gz
+*.tmp
+*.temp
+*.swp
+
+# Node / frontend artifacts if added later
+node_modules/
+dist/
+coverage/
+
+# macOS metadata
+.AppleDouble
+.LSOverride
+
+# Optional local data
+*.sqlite
+*.db
+
+# Personal notes
+specs.md
