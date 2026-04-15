@@ -3,7 +3,7 @@
 
     <head>
         <meta charset="utf-8">
-        <title>VR Bridge Test</title>
+        <title>Dorado Viewer Test v2</title>
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <style>
             :root {
@@ -19,6 +19,20 @@
 
             h1 {
                 margin-top: 0;
+                margin-bottom: 8px;
+            }
+
+            .badge {
+                display: inline-block;
+                margin-bottom: 20px;
+                padding: 6px 10px;
+                border: 1px solid #2d6cdf;
+                border-radius: 999px;
+                color: #9fc0ff;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
             }
 
             .row {
@@ -53,7 +67,7 @@
             }
 
             .ok {
-                color: #7CFC98;
+                color: #7cfc98;
             }
 
             .err {
@@ -63,23 +77,24 @@
     </head>
 
     <body>
-        <h1>Bridge Test</h1>
+        <h1>Dorado Viewer Test</h1>
+        <div class="badge">HTTPS / WSS version</div>
 
         <div class="row">
             <label for="host">Host</label>
-            <input id="host" value="192.168.137.1" />
+            <input id="host" value="10.31.29.85">
         </div>
 
         <div class="row">
             <label for="port">Port</label>
-            <input id="port" value="5005" />
+            <input id="port" value="5005">
         </div>
 
         <div class="row">
-            <button id="httpBtn">Test HTTP</button>
-            <button id="wsConnectBtn">Connect WS</button>
-            <button id="wsSendBtn">Send WS</button>
-            <button id="wsCloseBtn">Close WS</button>
+            <button id="httpBtn">Test HTTPS</button>
+            <button id="wsConnectBtn">Connect WSS</button>
+            <button id="wsSendBtn">Send WSS</button>
+            <button id="wsCloseBtn">Close WSS</button>
             <button id="clearBtn">Clear</button>
         </div>
 
@@ -98,21 +113,21 @@
             document.getElementById("wsCloseBtn").addEventListener("click", closeWs);
             document.getElementById("clearBtn").addEventListener("click", clearLog);
 
-            function getHttpBaseUrl() {
+            function getHttpsBaseUrl() {
                 const host = hostInput.value.trim();
                 const port = portInput.value.trim();
-                return `http://${host}:${port}`;
+                return `https://${host}:${port}`;
             }
 
-            function getWsUrl() {
+            function getWssUrl() {
                 const host = hostInput.value.trim();
                 const port = portInput.value.trim();
-                return `ws://${host}:${port}/ws`;
+                return `wss://${host}:${port}/ws`;
             }
 
             async function testHttp() {
-                const url = `${getHttpBaseUrl()}/api/ping`;
-                log(`HTTP request: ${url}`);
+                const url = `${getHttpsBaseUrl()}/api/ping`;
+                log(`HTTPS request: ${url}`);
 
                 try {
                     const response = await fetch(url, {
@@ -120,54 +135,54 @@
                     });
 
                     const text = await response.text();
-                    log(`HTTP status: ${response.status}`, "ok");
-                    log(`HTTP body: ${text}`, "ok");
+                    log(`HTTPS status: ${response.status}`, "ok");
+                    log(`HTTPS body: ${text}`, "ok");
                 } catch (error) {
-                    log(`HTTP error: ${error.message}`, "err");
+                    log(`HTTPS error: ${error.message}`, "err");
                 }
             }
 
             function connectWs() {
-                const url = getWsUrl();
-                log(`WS connect: ${url}`);
+                const url = getWssUrl();
+                log(`WSS connect: ${url}`);
 
                 try {
                     socket = new WebSocket(url);
 
                     socket.addEventListener("open", () => {
-                        log("WS open", "ok");
+                        log("WSS open", "ok");
                     });
 
                     socket.addEventListener("message", event => {
-                        log(`WS message: ${event.data}`, "ok");
+                        log(`WSS message: ${event.data}`, "ok");
                     });
 
                     socket.addEventListener("close", event => {
-                        log(`WS close: code=${event.code} reason=${event.reason || "none"}`);
+                        log(`WSS close: code=${event.code} reason=${event.reason || "none"}`);
                     });
 
                     socket.addEventListener("error", () => {
-                        log("WS error", "err");
+                        log("WSS error", "err");
                     });
                 } catch (error) {
-                    log(`WS exception: ${error.message}`, "err");
+                    log(`WSS exception: ${error.message}`, "err");
                 }
             }
 
             function sendWs() {
                 if (!socket || socket.readyState !== WebSocket.OPEN) {
-                    log("WS not connected", "err");
+                    log("WSS not connected", "err");
                     return;
                 }
 
                 const payload = `hello ${new Date().toISOString()}`;
                 socket.send(payload);
-                log(`WS sent: ${payload}`);
+                log(`WSS sent: ${payload}`);
             }
 
             function closeWs() {
                 if (!socket) {
-                    log("WS not initialized");
+                    log("WSS not initialized");
                     return;
                 }
 
